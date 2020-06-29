@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<login>
+  <account>
+    <firstname>1</firstname>
+    <lastname>1</lastname>
+    <username>1</username>
+    <password>1</password>
+  </account>
+<account>
+    <firstname>1</firstname>
+    <lastname>1</lastname>
+    <username>12</username>
+    <password>1</password>
+  </account>
+<account>
+    <firstname>1</firstname>
+    <lastname>1</lastname>
+    <username>123</username>
+    <password>123</password>
+  </account>
+</login>

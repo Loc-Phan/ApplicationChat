@@ -125,7 +125,7 @@ public class Register extends javax.swing.JFrame {
 
         btnLogin.setBackground(new java.awt.Color(34, 167, 240));
         btnLogin.setFont(new java.awt.Font("Tahoma", 1, 16)); // NOI18N
-        btnLogin.setText("Login");
+        btnLogin.setText("Register");
         btnLogin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnLoginActionPerformed(evt);
@@ -266,6 +266,12 @@ public class Register extends javax.swing.JFrame {
                         else {
                             SaveAccount.addAccount(temp, "Account.xml");
                             JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
+                            Login lg = new Login();
+                            lg.setVisible(true);
+                            lg.pack();
+                            lg.setLocationRelativeTo(null);
+                            lg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                            this.dispose();
                         }
                     } catch (ParserConfigurationException ex) {
                         Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);

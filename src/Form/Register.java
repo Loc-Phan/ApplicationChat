@@ -49,6 +49,11 @@ public class Register extends javax.swing.JFrame {
     /**
      * Creates new form Register
      */
+    public Register(String address_) {
+        address = address_;
+        //System.out.println(address);
+        initComponents();
+    }
     public Register() {
         initComponents();
     }

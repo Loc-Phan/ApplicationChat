@@ -57,6 +57,9 @@ public class TCPClient extends javax.swing.JFrame {
     public void sendDisconnect() {
         String bye = (username + ": :Disconnect");
         try {
+            sock = new Socket(address, port);
+            writer = new PrintWriter(sock.getOutputStream());
+            
             writer.println(bye);
             writer.flush();
         } catch (Exception e) {
@@ -67,6 +70,7 @@ public class TCPClient extends javax.swing.JFrame {
     //--------------------------//
     public void Disconnect() {
         try {
+
             sock.close();
         } catch (Exception ex) {
             txtMess.append("Không thể ngắt kết nối. \n");
@@ -78,13 +82,15 @@ public class TCPClient extends javax.swing.JFrame {
      * Creates new form TCPClient
      */
     String userName;
-    public TCPClient(Account acc, BufferedReader br) throws IOException {
+    public TCPClient(Account acc, BufferedReader br, String address_) throws IOException {
         initComponents();
         username = acc.getUserName();
         userName = acc.getUserName();
+        address = address_;
+        //System.out.println(address);
         listModel = new DefaultListModel();
         reader = br;
-        
+        chatGr=0;
         ListenThread();
         
     }
@@ -101,7 +107,7 @@ public class TCPClient extends javax.swing.JFrame {
         public void run() {
             String[] data;
             String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat";
-            
+            //chatGr = 0;
             
             try {
                 while ((stream = reader.readLine()) != null) {
@@ -109,35 +115,30 @@ public class TCPClient extends javax.swing.JFrame {
                     data = stream.split(":");
                     //System.out.println(data[2]);
                     if (data[2].equals(chat)) {
-                        //System.out.println("chatGr: "+chatGr);
-                        if (chatGr == 1) {
-                            
-                            txtMess.append(data[0] + ": " + data[1] + "\n");
-                        } 
-                        else if(chatGr==0){
-                            
-                            if (data[1].contains(",")) {
-                                String tempMess = data[1];
-                                
-                                String [] mess = tempMess.split(",");
 
-                                if (userName.equals(mess[1])) {
-                                    txtMess.append("<"+data[0] + " đã gửi tới tôi> : " + mess[0] + "\n");
-                                } else if (userName.equals(data[0])) {
-                                    txtMess.append("<Tôi đã gửi tới " + mess[1] + "> : " + mess[0] + "\n");
-                                }
+                        if (data[1].contains(",")) {
+                            String tempMess = data[1];
+
+                            String[] mess = tempMess.split(",");
+
+                            if (userName.equals(mess[1])) {
+                                txtMess.append("<" + data[0] + " đã gửi tới tôi> : " + mess[0] + "\n");
+                            } else if (userName.equals(data[0])) {
+                                txtMess.append("<Tôi đã gửi tới " + mess[1] + "> : " + mess[0] + "\n");
                             }
+                        }
+                        else {
+                            if(username.equals(data[0])) {
+                                txtMess.append("<Tôi đã gửi tới mọi người> : " + data[1] + "\n");
+                            }
+                            else 
+                                txtMess.append("<"+ data[0] + " đã gửi tới mọi người> : " + data[1] + "\n");
                         }
                         txtMess.setCaretPosition(txtMess.getDocument().getLength());
                     } else if (data[2].equals(connect)) {
-                        
+
                         txtMess.removeAll();
                         userAdd(data[0]);
-                    } else if (data[2].equals(disconnect)) {
-                        userRemove(data[0]);
-                    } else if (data[2].equals(done)) {
-                        txtMess.setText("");
-                        writeUsers();
                         if (chatGr == 0) {
                             listModel.clear();
                             for (int i = 0; i < users.size(); i++) {
@@ -147,6 +148,13 @@ public class TCPClient extends javax.swing.JFrame {
                             }
                             list.setModel(listModel);
                         }
+                    } else if (data[2].equals(disconnect)) {
+                        userRemove(data[0]);
+                        
+                    } else if (data[2].equals(done)) {
+                        txtMess.setText("");
+                        writeUsers();
+
                         users.clear();
                     }
                 }
@@ -280,6 +288,11 @@ public class TCPClient extends javax.swing.JFrame {
         txtChat.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         jButton2.setIcon(new javax.swing.ImageIcon("C:\\Users\\ASUS-PC\\Downloads\\icons8-file-48.png")); // NOI18N
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         btnSend.setForeground(new java.awt.Color(204, 255, 255));
         btnSend.setIcon(new javax.swing.ImageIcon("C:\\Users\\ASUS-PC\\Downloads\\icons8-email-send-48.png")); // NOI18N
@@ -347,15 +360,18 @@ public class TCPClient extends javax.swing.JFrame {
 
     private void btnLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogActionPerformed
         sendDisconnect();
-        Disconnect();
+        //Disconnect();
         // TODO add your handling code here:
     }//GEN-LAST:event_btnLogActionPerformed
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         String nothing = "";
         String name=null;
-        if(chatGr==0) {
+        
             name=(String)list.getSelectedValue(); 
+        
+        if(name!=null) {
+            chatGr=0;
         }
         if ((txtChat.getText()).equals(nothing)) {
             txtChat.setText("");
@@ -370,6 +386,7 @@ public class TCPClient extends javax.swing.JFrame {
                     writer.println(username + ":" + txtChat.getText()+ "," + name + ":" + "Chat");
                 }
                 else if(chatGr==1){
+                    //System.out.println("Hehe");
                     writer.println(username + ":" + txtChat.getText() + ":" + "Chat");
                 }
                 writer.flush();
@@ -392,6 +409,7 @@ public class TCPClient extends javax.swing.JFrame {
 
     private void btnGroupMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnGroupMousePressed
         chatGr = 1;
+        list.clearSelection();
         // TODO add your handling code here:
     }//GEN-LAST:event_btnGroupMousePressed
 
@@ -399,6 +417,11 @@ public class TCPClient extends javax.swing.JFrame {
         user.setText(username);
         // TODO add your handling code here:
     }//GEN-LAST:event_userAncestorAdded
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments

@@ -13,7 +13,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,17 +35,24 @@ public class Login extends javax.swing.JFrame {
     BufferedReader reader;
     PrintWriter writer;
     Boolean isConnected = false;
-    
-//    public void ListenThread() {
-//        Thread IncomingReader = new Thread(new IncomingReader());
-//        IncomingReader.start();
-//    }
+    String ipAddress;
+
     
     /**
      * Creates new form Login
      */
     public Login() {
+        InetAddress addr = null;
+        try {
+            addr = InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        ipAddress = addr.getHostAddress();
+        address = ipAddress;
         initComponents();
+
+        //System.out.println(address);
     }
 
     /**
@@ -157,6 +166,11 @@ public class Login extends javax.swing.JFrame {
 
         txtIP.setBackground(new java.awt.Color(108, 122, 137));
         txtIP.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        txtIP.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtIPActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -234,6 +248,11 @@ public class Login extends javax.swing.JFrame {
         Account acc = new Account();
         acc.setUserName(txtUser.getText());
         acc.setPassWord(txtPass.getText());
+        //lấy ipaddress
+
+        if(!txtIP.getText().equals("")) {
+            address = txtIP.getText();
+        }
         username = txtUser.getText();
         if(txtUser.getText().equals("") || txtPass.getText().equals("")) {
             JOptionPane.showMessageDialog(rootPane,"Bạn cần nhập đầy đủ thông tin");
@@ -260,16 +279,9 @@ public class Login extends javax.swing.JFrame {
                 //System.out.println(user_[0]);
                 if (user_[0].equals("0")) {
                     JOptionPane.showMessageDialog(rootPane,"Bạn cần đăng kí trước khi đăng nhập");
-//                    Register reg = new Register();
-//                    reg.setVisible(true);
-//                    reg.pack();
-//                    reg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//                    this.dispose();
                 } else if (user_[0].equals("1")) {
-                    // đăng nhập đúng thì mở client
-//                    writer.println(username + ":"+"has "+":Connect");
-//                    writer.flush();   
-                    TCPClient tcp = new TCPClient(acc,reader);
+                    TCPClient tcp = new TCPClient(acc,reader,address);      
+                    //System.out.println("address: "+address);
                     tcp.setVisible(true);
                     tcp.pack();
                     tcp.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -277,16 +289,7 @@ public class Login extends javax.swing.JFrame {
                 } else if (user_[0].equals("2")) {
                     JOptionPane.showMessageDialog(rootPane,"Mật khẩu không đúng. Vui lòng nhập lại");
                 }
-//                if(TCPServer.isConn==1) {
-//                    TCPClient tcp = new TCPClient(acc);
-//                    tcp.setVisible(true);
-//                    tcp.pack();
-//                    tcp.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//                    this.dispose();
-//                }
-//                else {
-//                    System.out.println("huhu");
-//                }
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -296,7 +299,8 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
-        Register rgt = new Register();
+        Register rgt = new Register(address);
+        //System.out.println(address);
         rgt.setVisible(true);
         rgt.pack();
         rgt.setLocationRelativeTo(null);
@@ -304,6 +308,11 @@ public class Login extends javax.swing.JFrame {
         this.dispose();
         // TODO add your handling code here:
     }//GEN-LAST:event_lblRegisterMouseClicked
+
+    private void txtIPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtIPActionPerformed
+        
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtIPActionPerformed
 
     /**
      * @param args the command line arguments

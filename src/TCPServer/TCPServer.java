@@ -18,8 +18,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -84,7 +86,7 @@ public class TCPServer extends javax.swing.JFrame {
         public void run() {
             String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat";
             String[] data;
-            isConn = 0;
+            isConn = 0; //khởi động lại thì chưa có account nào
             Account acc = new Account();
             try {
 
@@ -169,7 +171,6 @@ public class TCPServer extends javax.swing.JFrame {
 
                     if (data[2].equals(connect)) {
                         tellEveryone((data[0] + ":" + data[1] + ":" + chat));
-                        //tellUser((data[0] + ":" + data[1] + ":" + chat),data[0]);
                         // đúng thì thêm user vào
                         if(isConn==1) {
                             userAdd(data[0]); 
@@ -259,10 +260,6 @@ public class TCPServer extends javax.swing.JFrame {
                         txtMess.setCaretPosition(txtMess.getDocument().getLength());
                     }
                 }
-//                writer.println(message);
-//                txtMess.append("Sending: " + message + "\n");
-//                writer.flush();
-//                txtMess.setCaretPosition(txtMess.getDocument().getLength());
 
             } catch (Exception ex) {
                 txtMess.append("Error telling everyone. \n");
@@ -284,34 +281,87 @@ public class TCPServer extends javax.swing.JFrame {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         txtMess = new javax.swing.JTextArea();
+        jButton1 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        lblIP = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Server");
+        setBackground(new java.awt.Color(204, 204, 204));
 
         txtMess.setColumns(20);
         txtMess.setFont(new java.awt.Font("Courier New", 0, 14)); // NOI18N
         txtMess.setRows(5);
         jScrollPane1.setViewportView(txtMess);
 
+        jButton1.setIcon(new javax.swing.ImageIcon("C:\\Users\\ASUS-PC\\Downloads\\database.png")); // NOI18N
+        jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+
+        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        jLabel1.setText("IP Address: ");
+
+        lblIP.setFont(new java.awt.Font("Tahoma", 1, 20)); // NOI18N
+        lblIP.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
+            }
+            public void ancestorAdded(javax.swing.event.AncestorEvent evt) {
+                lblIPAncestorAdded(evt);
+            }
+            public void ancestorRemoved(javax.swing.event.AncestorEvent evt) {
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(33, 33, 33)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblIP, javax.swing.GroupLayout.PREFERRED_SIZE, 213, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(99, 99, 99)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(7, 7, 7)
+                        .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(38, 38, 38)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblIP, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
         setSize(new java.awt.Dimension(581, 495));
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void lblIPAncestorAdded(javax.swing.event.AncestorEvent evt) {//GEN-FIRST:event_lblIPAncestorAdded
+        InetAddress addr = null;
+        try {
+            addr = InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(TCPServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        String ipAddress = addr.getHostAddress();
+        lblIP.setText(ipAddress);
+        // TODO add your handling code here:
+    }//GEN-LAST:event_lblIPAncestorAdded
 
     /**
      * @param args the command line arguments
@@ -390,7 +440,10 @@ public class TCPServer extends javax.swing.JFrame {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblIP;
     private javax.swing.JTextArea txtMess;
     // End of variables declaration//GEN-END:variables
 }

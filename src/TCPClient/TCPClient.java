@@ -8,6 +8,7 @@ package TCPClient;
 import Account.Account;
 import Form.Login;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -35,6 +36,7 @@ public class TCPClient extends javax.swing.JFrame {
         
         Thread IncomingReader = new Thread(new IncomingReader());
         IncomingReader.start();
+        
     }
 
     public void userAdd(String data) {
@@ -76,30 +78,15 @@ public class TCPClient extends javax.swing.JFrame {
      * Creates new form TCPClient
      */
     String userName;
-    public TCPClient(Account acc) {
+    public TCPClient(Account acc, BufferedReader br) throws IOException {
         initComponents();
         username = acc.getUserName();
         userName = acc.getUserName();
         listModel = new DefaultListModel();
-
-            try 
-            {
-                sock = new Socket(address, port);
-                InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
-                reader = new BufferedReader(streamreader);
-                //System.out.println(reader);
-                writer = new PrintWriter(sock.getOutputStream());
-                writer.println(username + ":has connected.:Connect");
-                writer.flush(); 
-                isConnected = true; 
-            } 
-            catch (Exception ex) 
-            {
-                txtMess.append("Không thể kết nối! Vui lòng thử lại. \n");
-            }
-            
-            ListenThread();
-            
+        reader = br;
+        
+        ListenThread();
+        
     }
     
     public TCPClient() {
@@ -115,28 +102,29 @@ public class TCPClient extends javax.swing.JFrame {
             String[] data;
             String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat";
             
-            String[] mess;
-            //System.out.println(reader);
+            
             try {
                 while ((stream = reader.readLine()) != null) {
-                    //System.out.println(stream);
+                    //System.out.println("stream: "+stream);
                     data = stream.split(":");
                     //System.out.println(data[2]);
                     if (data[2].equals(chat)) {
-                        System.out.println("chatGr: "+chatGr);
+                        //System.out.println("chatGr: "+chatGr);
                         if (chatGr == 1) {
                             
                             txtMess.append(data[0] + ": " + data[1] + "\n");
                         } 
                         else if(chatGr==0){
+                            
                             if (data[1].contains(",")) {
                                 String tempMess = data[1];
-                                mess = tempMess.split(",");
+                                
+                                String [] mess = tempMess.split(",");
 
                                 if (userName.equals(mess[1])) {
-                                    txtMess.append(data[0] + " đã gửi tới tôi: " + mess[0] + "\n");
+                                    txtMess.append("<"+data[0] + " đã gửi tới tôi> : " + mess[0] + "\n");
                                 } else if (userName.equals(data[0])) {
-                                    txtMess.append("Tôi đã gửi tới " + data[0] + ": " + mess[0] + "\n");
+                                    txtMess.append("<Tôi đã gửi tới " + mess[1] + "> : " + mess[0] + "\n");
                                 }
                             }
                         }
@@ -365,20 +353,28 @@ public class TCPClient extends javax.swing.JFrame {
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         String nothing = "";
-        String name=(String)list.getSelectedValue();
+        String name=null;
+        if(chatGr==0) {
+            name=(String)list.getSelectedValue(); 
+        }
         if ((txtChat.getText()).equals(nothing)) {
             txtChat.setText("");
             txtChat.requestFocus();
         } else {
             try {
+                sock = new Socket(address, port);
+                //InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
+                //reader = new BufferedReader(streamreader);
+                writer = new PrintWriter(sock.getOutputStream());
                 if(chatGr==0) {
                     writer.println(username + ":" + txtChat.getText()+ "," + name + ":" + "Chat");
                 }
                 else if(chatGr==1){
                     writer.println(username + ":" + txtChat.getText() + ":" + "Chat");
                 }
-                writer.flush(); // flushes the buffer
+                writer.flush();
             } catch (Exception ex) {
+                ex.printStackTrace();
                 txtMess.append("Không thể gửi tin nhắn. \n");
             }
             txtChat.setText("");

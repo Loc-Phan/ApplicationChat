@@ -5,12 +5,14 @@
  */
 package Form;
 
+import TCPServer.TCPServer;
 import Account.*;
 import static Account.SaveAccount.ReadFileXML;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import java.io.*;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -39,7 +41,11 @@ import org.xml.sax.SAXException;
  * @author Chen-Yang
  */
 public class Register extends javax.swing.JFrame {
-
+    String username, address = "localhost";
+    int port = 3451;
+    Socket sock;
+    BufferedReader reader;
+    PrintWriter writer;
     /**
      * Creates new form Register
      */
@@ -250,50 +256,85 @@ public class Register extends javax.swing.JFrame {
             temp.setLastName(txtLName.getText());
             temp.setUserName(txtUser.getText());
             temp.setPassWord(txtPass.getText());
+            username = txtUser.getText();
+            
+            try {
+                sock = new Socket(address, port);
+                InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
+                reader = new BufferedReader(streamreader);
+                //System.out.println(reader.readLine());
+                writer = new PrintWriter(sock.getOutputStream());
+                //System.out.println(sock.getOutputStream());
+                writer.println(username +":"+txtPass.getText()+":Register");
+                writer.flush();                
+                
+                BufferedReader brTemp = reader;
+                //System.out.println(brTemp);
+                //System.out.println(reader);
+                String brTempString = brTemp.readLine();
+                //System.out.println("huhu: "+brTempString);
+                String []checkUser = brTempString.split(":");
+                String[] check = checkUser[0].split("-");
+                
+
+                if(check[0].equals("1")) {
+                    JOptionPane.showMessageDialog(rootPane, "Tài khoản này đã tồn tại");
+                }
+                else if(check[0].equals("0")) {
+                    JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
+                    txtLName.setText("");
+                    txtFName.setText("");
+                    txtUser.setText("");
+                    txtPass.setText("");
+                    txtRPass.setText("");
+                }
+            }catch(Exception ex) {
+                ex.printStackTrace();
+            }
             
             //retype pass trùng với password
-            if (txtPass.getText().compareTo(txtRPass.getText()) != 0) {
-                JOptionPane.showMessageDialog(rootPane, "Bạn cần nhập lại mật khẩu");
-            } else {
-                //lưu vào xml
-                File f = new File("Account.xml");
-                if (f.exists()) {
-                    try {
-                        //kiem tra account ton tai
-                        if(SaveAccount.isExistsAccount(temp, "Account.xml")) {
-                            JOptionPane.showMessageDialog(rootPane, "Tài khoản này đã tồn tại");
-                        }
-                        else {
-                            SaveAccount.addAccount(temp, "Account.xml");
-                            JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
-                            Login lg = new Login();
-                            lg.setVisible(true);
-                            lg.pack();
-                            lg.setLocationRelativeTo(null);
-                            lg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                            this.dispose();
-                        }
-                    } catch (ParserConfigurationException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SAXException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (TransformerException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    //khong ton tai thi tao moi
-                    try {
-                        SaveAccount.createFileXML(temp,"Account.xml");
-                        JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
-                    } catch (IOException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SAXException ex) {
-                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
+//            if (txtPass.getText().compareTo(txtRPass.getText()) != 0) {
+//                JOptionPane.showMessageDialog(rootPane, "Bạn cần nhập lại mật khẩu");
+//            } else {
+//                //lưu vào xml
+//                File f = new File("Account.xml");
+//                if (f.exists()) {
+//                    try {
+//                        //kiem tra account ton tai
+//                        if(SaveAccount.isExistsAccount(temp, "Account.xml")) {
+//                            JOptionPane.showMessageDialog(rootPane, "Tài khoản này đã tồn tại");
+//                        }
+//                        else {
+//                            SaveAccount.addAccount(temp, "Account.xml");
+//                            JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
+//                            Login lg = new Login();
+//                            lg.setVisible(true);
+//                            lg.pack();
+//                            lg.setLocationRelativeTo(null);
+//                            lg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//                            this.dispose();
+//                        }
+//                    } catch (ParserConfigurationException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (SAXException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (TransformerException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                } else {
+//                    //khong ton tai thi tao moi
+//                    try {
+//                        SaveAccount.createFileXML(temp,"Account.xml");
+//                        JOptionPane.showMessageDialog(rootPane, "Tạo tài khoản thành công");
+//                    } catch (IOException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    } catch (SAXException ex) {
+//                        Logger.getLogger(Register.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
+//            }
         }
         // TODO add your handling code here:
     }//GEN-LAST:event_btnLoginActionPerformed

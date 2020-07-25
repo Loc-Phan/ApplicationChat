@@ -5,10 +5,15 @@
  */
 package Form;
 
+import TCPServer.TCPServer;
 import TCPClient.TCPClient;
 import Account.Account;
 import Account.SaveAccount;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,7 +27,18 @@ import org.xml.sax.SAXException;
  * @author Chen-Yang
  */
 public class Login extends javax.swing.JFrame {
-
+    String username, address = "localhost";
+    int port = 3451;
+    Socket sock;
+    BufferedReader reader;
+    PrintWriter writer;
+    Boolean isConnected = false;
+    
+//    public void ListenThread() {
+//        Thread IncomingReader = new Thread(new IncomingReader());
+//        IncomingReader.start();
+//    }
+    
     /**
      * Creates new form Login
      */
@@ -209,16 +225,6 @@ public class Login extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
-        Register rgt = new Register();
-        rgt.setVisible(true);
-        rgt.pack();
-        rgt.setLocationRelativeTo(null);
-        rgt.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.dispose();
-        // TODO add your handling code here:
-    }//GEN-LAST:event_lblRegisterMouseClicked
-
     private void btnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelActionPerformed
         System.exit(0);
         // TODO add your handling code here:
@@ -228,36 +234,76 @@ public class Login extends javax.swing.JFrame {
         Account acc = new Account();
         acc.setUserName(txtUser.getText());
         acc.setPassWord(txtPass.getText());
+        username = txtUser.getText();
         if(txtUser.getText().equals("") || txtPass.getText().equals("")) {
             JOptionPane.showMessageDialog(rootPane,"Bạn cần nhập đầy đủ thông tin");
         }
         else {
             try {
-                List<Account> ds = SaveAccount.ListAccount("Account.xml");
-                int check  = 0;
-                for(int i=0;i<ds.size();i++) {
-                    if(txtUser.getText().compareTo(ds.get(i).getUserName())==0 && txtPass.getText().compareTo(ds.get(i).getPassWord())==0) {
-                        check=1;
-                        TCPClient tcp = new TCPClient(acc);
-                        tcp.setVisible(true);
-                        tcp.pack();
-                        tcp.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                        this.dispose();
-                    }
+                sock = new Socket(address, port);
+                InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
+                reader = new BufferedReader(streamreader);
+                //System.out.println(reader.readLine());
+                writer = new PrintWriter(sock.getOutputStream());
+                //System.out.println(sock.getOutputStream());
+                writer.println(username + ":"+txtPass.getText()+":Connect");
+                writer.flush();                
+                isConnected = true;
+                
+                BufferedReader brTemp = reader;
+                
+                String brTempString = brTemp.readLine();
+                //System.out.println(brTempString);
+                String []checkUser = brTempString.split(":");
+                //System.out.println(checkUser[0]);
+                String []user_ = checkUser[0].split("-"); //lấy 0/1/2 để kt xem user đã đăng kí chưa/đăng kí rồi/đăng kí rồi nhưng sai mật khẩu
+                //System.out.println(user_[0]);
+                if (user_[0].equals("0")) {
+                    JOptionPane.showMessageDialog(rootPane,"Bạn cần đăng kí trước khi đăng nhập");
+//                    Register reg = new Register();
+//                    reg.setVisible(true);
+//                    reg.pack();
+//                    reg.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//                    this.dispose();
+                } else if (user_[0].equals("1")) {
+                    // đăng nhập đúng thì mở client
+//                    writer.println(username + ":"+"has "+":Connect");
+//                    writer.flush();   
+                    TCPClient tcp = new TCPClient(acc,reader);
+                    tcp.setVisible(true);
+                    tcp.pack();
+                    tcp.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    this.dispose();
+                } else if (user_[0].equals("2")) {
+                    JOptionPane.showMessageDialog(rootPane,"Mật khẩu không đúng. Vui lòng nhập lại");
                 }
-                if(check==0) {
-                    JOptionPane.showMessageDialog(rootPane,"Username hoặc Password không đúng");
-                }
-            } catch (ParserConfigurationException ex) {
-                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SAXException ex) {
-                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+//                if(TCPServer.isConn==1) {
+//                    TCPClient tcp = new TCPClient(acc);
+//                    tcp.setVisible(true);
+//                    tcp.pack();
+//                    tcp.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//                    this.dispose();
+//                }
+//                else {
+//                    System.out.println("huhu");
+//                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
+
         }
         // TODO add your handling code here:
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void lblRegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegisterMouseClicked
+        Register rgt = new Register();
+        rgt.setVisible(true);
+        rgt.pack();
+        rgt.setLocationRelativeTo(null);
+        rgt.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.dispose();
+        // TODO add your handling code here:
+    }//GEN-LAST:event_lblRegisterMouseClicked
 
     /**
      * @param args the command line arguments

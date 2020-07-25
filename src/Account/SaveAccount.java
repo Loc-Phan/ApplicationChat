@@ -109,16 +109,7 @@ public class SaveAccount {
             acc.appendChild(pass);
             
             WriteFileXML(doc,fileName);
-            
-//            TransformerFactory transformerFactory
-//                        = TransformerFactory.newInstance();
-//            Transformer transformer = transformerFactory.newTransformer();
-//            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-//            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-//            DOMSource source = new DOMSource(doc);
-//            StreamResult result = new StreamResult(
-//                        new File(fileName));
-//            transformer.transform(source, result);
+
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -166,5 +157,6 @@ public class SaveAccount {
     }
     public static void main(String args[]) throws ParserConfigurationException, IOException, SAXException {
         List<Account> ds = ListAccount("Account.xml");
+        System.out.println(ds.get(0).getPassWord());
     }
 }

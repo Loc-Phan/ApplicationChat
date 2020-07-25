@@ -5,14 +5,41 @@
  */
 package TCPServer;
 
+import Account.Account;
+import Account.SaveAccount;
 import Form.Login;
+import TCPClient.TCPClient;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -22,12 +49,15 @@ public class TCPServer extends javax.swing.JFrame {
 
     ArrayList clientOutputStreams;
     ArrayList<String> users;
+    public static int isConn = 0;
+    public static List<Account> ds = null;
+    //BufferedReader br;
 
     public TCPServer() {
         initComponents();
         Thread starter = new Thread(new ServerStart());
         starter.start();
-
+        isConn=0;
     }
 
     public class ClientHandler implements Runnable {
@@ -36,12 +66,14 @@ public class TCPServer extends javax.swing.JFrame {
         Socket s;
         PrintWriter client;
 
-        public ClientHandler(Socket clientSocket, PrintWriter user) {
+        public ClientHandler(Socket clientSocket, PrintWriter user){
             client = user;
+            //System.out.println("client: "+client);
             try {
                 s = clientSocket;
                 InputStreamReader isReader = new InputStreamReader(s.getInputStream());
                 br = new BufferedReader(isReader);
+
             } catch (Exception ex) {
                 txtMess.append("Unexpected error... \n");
             }
@@ -52,28 +84,113 @@ public class TCPServer extends javax.swing.JFrame {
         public void run() {
             String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat";
             String[] data;
-
+            isConn = 0;
+            Account acc = new Account();
             try {
+
                 while ((message = br.readLine()) != null) {
                     txtMess.append("Received: " + message + "\n");
                     data = message.split(":");
 
+                    acc.setUserName(data[0]);
+                    acc.setPassWord(data[1]);
+
+                    //System.out.println(acc.getPassWord());
+                    if (data[2].equals("Connect")) {
+                        try {
+                            
+                            ds = SaveAccount.ListAccount("Account.xml");
+                            for (int i = 0; i < ds.size(); i++) {
+                                if (acc.getUserName().equals(ds.get(i).getUserName()) && !acc.getPassWord().equals(ds.get(i).getPassWord())) {
+                                    isConn = 2;
+                                    OutputStream os = s.getOutputStream();
+                                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                                    bw.write("2-");
+                                    bw.flush();
+                                }
+
+                                if (acc.getUserName().equals(ds.get(i).getUserName()) && acc.getPassWord().equals(ds.get(i).getPassWord())) {
+                                    //tellEveryone((data[0] + ":" + data[1] + ":" + chat));
+                                    isConn = 1;
+                                    OutputStream os = s.getOutputStream();
+                                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                                    bw.write("1-");
+                                    bw.flush();
+
+                                }
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            txtMess.append("Lỗi đăng nhập... \n");
+                        }
+                        if (isConn == 0) {
+                            OutputStream os = s.getOutputStream();
+                            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                            bw.write("0-");
+                            bw.flush();
+                        }
+
+                    }
+                    else if (data[2].equals("Register")) {
+                        int tontai = 0;
+                        //System.out.println("Do duoc register");
+                        try {
+                            ds = SaveAccount.ListAccount("Account.xml");
+                            for (int i = 0; i < ds.size(); i++) {
+                                //System.out.println("Do duoc for");
+                                if (acc.getUserName().equals(ds.get(i).getUserName())) {
+                                    tontai = 1;
+                                    OutputStream os = s.getOutputStream();
+                                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                                    bw.write("1-");
+                                    bw.flush();
+                                }
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            
+                        }
+                        if (tontai == 0) {
+                            acc.setFirstName("None");
+                            acc.setLastName("None");
+                            File f = new File("Account.xml");
+                            if(f.exists()) {
+                                SaveAccount.addAccount(acc, "Account.xml"); 
+                            }
+                            else {
+                                SaveAccount.createFileXML(acc, "Account.xml");
+                            }
+                            OutputStream os = s.getOutputStream();
+                            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                            bw.write("0-");
+                            bw.flush();
+                        }
+                    }
+
                     if (data[2].equals(connect)) {
                         tellEveryone((data[0] + ":" + data[1] + ":" + chat));
                         //tellUser((data[0] + ":" + data[1] + ":" + chat),data[0]);
-                        userAdd(data[0]);
+                        // đúng thì thêm user vào
+                        if(isConn==1) {
+                            userAdd(data[0]); 
+                        }
                     } else if (data[2].equals(disconnect)) {
                         tellEveryone((data[0] + ":has disconnected." + ":" + chat));
                         userRemove(data[0]);
                     } else if (data[2].equals(chat)) {
                         tellEveryone(message);
                         //tellUser(message,data[0]);
-                    } else {
-                        txtMess.append("No Conditions were met. \n");
+                    } else if (data[2].equals("Register")) {
+                        tellEveryone((data[0] + ":" + data[1] + ":" + "Register"));
+                        //tellUser(message,data[0]);
+                    } 
+                    else{
+                        //txtMess.append("No Conditions were met. \n");
                     }
+
                 }
             } catch (Exception ex) {
-                txtMess.append("Lost a connection. \n");
+                txtMess.append(acc.getUserName() + " đã mất kết nối. \n");
                 ex.printStackTrace();
                 clientOutputStreams.remove(client);
             }
@@ -124,18 +241,18 @@ public class TCPServer extends javax.swing.JFrame {
             }
         }
     }
-    
-    public void tellUser(String message,String userName) {
+
+    public void tellUser(String message, String userName) {
         Iterator it = clientOutputStreams.iterator();
-        
+
         while (it.hasNext()) {
             try {
                 String[] arrTemp;
                 PrintWriter writer = (PrintWriter) it.next();
-                if(message.contains(",")) {
+                if (message.contains(",")) {
                     String temp = message;
                     arrTemp = temp.split(",");
-                    if(userName.equals(arrTemp[1])) {
+                    if (userName.equals(arrTemp[1])) {
                         writer.println(arrTemp[0]);
                         txtMess.append("Sending: " + arrTemp[0] + "\n");
                         writer.flush();
@@ -227,6 +344,15 @@ public class TCPServer extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new TCPServer().setVisible(true);
+//                try {
+//                    new TCPServer().setVisible(true);
+//                } catch (ParserConfigurationException ex) {
+//                    Logger.getLogger(TCPServer.class.getName()).log(Level.SEVERE, null, ex);
+//                } catch (IOException ex) {
+//                    Logger.getLogger(TCPServer.class.getName()).log(Level.SEVERE, null, ex);
+//                } catch (SAXException ex) {
+//                    Logger.getLogger(TCPServer.class.getName()).log(Level.SEVERE, null, ex);
+//                }
             }
         });
     }
@@ -242,12 +368,16 @@ public class TCPServer extends javax.swing.JFrame {
                 ServerSocket serverSocket = new ServerSocket(3451);
 
                 while (true) {
+                    //đúng user mới đồng ý cho vào 
+
                     Socket cliSock = serverSocket.accept();
                     PrintWriter writer = new PrintWriter(cliSock.getOutputStream());
                     clientOutputStreams.add(writer);
 
                     Thread listener = new Thread(new ClientHandler(cliSock, writer));
+
                     listener.start();
+
                     //txtMess.append("Got a connection. \n");
                 }
             } catch (Exception ex) {
@@ -255,6 +385,9 @@ public class TCPServer extends javax.swing.JFrame {
             }
         }
     }
+
+
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
